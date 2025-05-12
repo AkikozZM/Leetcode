@@ -12,32 +12,75 @@
         If filePath already exists, appends the given content to original content.
     String readContentFromFile(String filePath) Returns the content in the file at filePath.
  */
-var FileSystem = function () {};
+class FileSystem {
+  constructor() {
+    this.root = {
+      type: "directory",
+      children: {},
+    };
+  }
+  /**
+   * @param {string} path
+   * @return {string[]}
+   */
+  ls(path) {
+    const node = this.traverse(path);
+    if (node.type === "file") {
+      // For files, return array with just the filename
+      const parts = path.split("/").filter((part) => part !== "");
+      return [parts[parts.length - 1]];
+    } else {
+      // For directories, return sorted list of children
+      return Object.keys(node.children).sort();
+    }
+  }
+  traverse(path) {
+    if (path === "/") return this.root;
 
-/**
- * @param {string} path
- * @return {string[]}
- */
-FileSystem.prototype.ls = function (path) {};
+    const parts = path.split("/").filter((part) => part !== "");
+    let current = this.root;
 
-/**
- * @param {string} path
- * @return {void}
- */
-FileSystem.prototype.mkdir = function (path) {};
+    for (const part of parts) {
+      if (!current.children[part]) {
+        current.children[part] = { type: "directory", children: {} };
+      }
+      current = current.children[part];
+    }
 
-/**
- * @param {string} filePath
- * @param {string} content
- * @return {void}
- */
-FileSystem.prototype.addContentToFile = function (filePath, content) {};
-
-/**
- * @param {string} filePath
- * @return {string}
- */
-FileSystem.prototype.readContentFromFile = function (filePath) {};
+    return current;
+  }
+  /**
+   * @param {string} path
+   * @return {void}
+   */
+  mkdir(path) {
+    this.traverse(path);
+  }
+  /**
+   * @param {string} filePath
+   * @param {string} content
+   * @return {void}
+   */
+  addContentToFile(filePath, content) {
+    const node = this.traverse(filePath);
+    if (node.type === "directory") {
+      node.type = "file";
+      node.content = content;
+    } else {
+      node.content = (node.content || "") + content;
+    }
+  }
+  /**
+   * @param {string} filePath
+   * @return {string}
+   */
+  readContentFromFile(filePath) {
+    const node = this.traverse(filePath);
+    if (node.type === "file") {
+      return node.content || "";
+    }
+  }
+}
 
 /**
  * Your FileSystem object will be instantiated and called as such:
